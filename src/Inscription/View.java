@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Inscription;
 
 import com.toedter.calendar.JDateChooser;
@@ -28,14 +23,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
-/**
- *
- * @author hp
- *
- * Disposition entièrement réécrite à la main (BorderLayout / FlowLayout / BoxLayout)
- * pour remplacer le GroupLayout généré par NetBeans, illisible et pénible à
- * réorganiser sans l'éditeur graphique Matisse.
- */
+
 public class View extends javax.swing.JFrame {
 
     public View() {
@@ -45,17 +33,17 @@ public class View extends javax.swing.JFrame {
     @SuppressWarnings("unchecked")
     private void initComponents() {
 
-        // ===================== Couleurs / styles communs =====================
+        //  Couleurs / styles communs 
         Color bleu = new Color(0, 0, 255);
         Color blanc = Color.WHITE;
         Font titreFont = new Font("Times New Roman", Font.BOLD, 24);
         Font labelFont = new Font("Times New Roman", Font.BOLD, 14);
-        final int LARGEUR_CHAMP = 232; // largeur commune à TOUS les champs du formulaire (y compris la date)
+        final int LARGEUR_CHAMP = 232; // largeur commune à TOUS les champs du formulaire 
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Gestion de Personne");
 
-        // ===================== Panel racine =====================
+        //  Panel racine 
         jPanel1 = new JPanel(new BorderLayout(10, 10));
         jPanel1.setBackground(bleu);
         jPanel1.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -151,7 +139,6 @@ public class View extends javax.swing.JFrame {
 
         jPanel1.add(jScrollPaneFormulaire, BorderLayout.WEST);
 
-        // ---------- Zone centrale : tableau + boutons + recherche (CENTER) ----------
         JPanel centre = new JPanel(new BorderLayout(0, 10));
         centre.setOpaque(false);
 
@@ -176,9 +163,7 @@ public class View extends javax.swing.JFrame {
         jScrollPane1.setPreferredSize(new Dimension(600, 260));
         centre.add(jScrollPane1, BorderLayout.CENTER);
 
-        // Rangée unique de boutons d'action : Ajouter / Modifier / Effacer / Supprimer / Fermer
-        // Fond de couleur pleine + texte blanc en gras : bon contraste (contrairement à du texte
-        // coloré peu saturé sur fond gris, difficile à lire).
+       
         jButtonAjouter = boutonAction("Ajouter", "/Inscription/ajouter-un-ami.png", new Color(34, 139, 87));
         jButtonModifier = boutonAction("Modifier", "/Inscription/update.png", new Color(41, 82, 204));
         jButtonEffacer = boutonAction("Effacer", null, new Color(120, 120, 120));
@@ -256,7 +241,6 @@ public class View extends javax.swing.JFrame {
     }
 
     // Crée un champ de texte au style standard du formulaire, avec une largeur fixe
-    // pour que TOUS les champs (y compris la date) soient parfaitement alignés.
     private JTextField champTexte(int largeur) {
         JTextField champ = new JTextField();
         champ.setFont(new Font("Times New Roman", Font.BOLD, 12));
@@ -267,7 +251,6 @@ public class View extends javax.swing.JFrame {
     }
 
     // Crée un bouton d'action au style standard : fond de couleur pleine + texte
-    // blanc en gras, largeur suffisante pour ne jamais tronquer le libellé.
     private JButton boutonAction(String texte, String iconePath, Color couleurFond) {
         JButton bouton = new JButton(texte);
         bouton.setBackground(couleurFond);
