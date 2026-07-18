@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package Inscription;
 
 import java.awt.event.ActionEvent;
@@ -28,8 +23,6 @@ import javax.swing.table.DefaultTableModel;
 public class Controller {
 
     // ==== Connexion SQLite ====
-    // Le fichier Client.db doit se trouver à la racine du projet (comme sur ta capture d'écran).
-    // Si tu veux un chemin absolu, remplace par ex: "jdbc:sqlite:C:/.../GestionEcole/Client.db"
     String Url = "jdbc:sqlite:Client.db";
 
     private Connection connexion;
