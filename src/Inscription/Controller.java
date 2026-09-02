@@ -1,3 +1,8 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package Inscription;
 
 import java.awt.event.ActionEvent;
@@ -8,8 +13,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -22,24 +25,20 @@ import javax.swing.table.DefaultTableModel;
  */
 public class Controller {
 
-    // ==== Connexion SQLite ====
-    String Url = "jdbc:sqlite:Client.db";
+    private static final String url =
+            "jdbc:postgresql://aws-1-eu-west-1.pooler.supabase.com:5432/postgres?sslmode=require";
 
     private Connection connexion;
     private View view;
-    private List<Model> clients;
     // Table pour afficher les données
     private DefaultTableModel tableModel;
     int idVraie;
     private int télephone;
     private int Argent;
-    private Date date;
 
     public Controller(View view) {
         this.view = view;
         this.tableModel = (DefaultTableModel) view.getjTableClients().getModel();
-        clients = new ArrayList<>();
-
         // Créer la table si elle n'existe pas encore
         try {
             creerTableSiAbsente();
@@ -109,14 +108,19 @@ public class Controller {
     // FONCTION POUR LE BOUTTON
     // Boutton Ajouter des Clients
     public void Ajouter() throws SQLException {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd / MM /yyyy");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         String id = view.getjTextFieldId().getText();
         String nom = view.getjTextFieldNom().getText();
         String prénoms = view.getjTextFieldPrénom().getText();
         String mention = view.getjTextFieldMention().getText();
         String parcour = view.getjTextFieldParcour().getText();
         String niveau = view.getjComboBox1().getSelectedItem().toString();
-        String dateNaissance = dateFormat.format(view.getjDateChoose().getDate());
+        Date dateChoisie = view.getjDateChoose().getDate();
+        if (dateChoisie == null) {
+            JOptionPane.showMessageDialog(view, "Sélectionnez une date de naissance.", "Champ obligatoire", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        String dateNaissance = dateFormat.format(dateChoisie);
         String phone = view.getjTextFieldTélephone().getText();
         String argent = view.getjTextFieldArgent().getText();
 
@@ -136,9 +140,8 @@ public class Controller {
             } else if (comp < 1) {
 
                 try {
-                    String ajout = "INSERT INTO mytable (Id,Nom,Prénom,Mention,Parcour,Niveau,Date,Tél,Argent) VALUES(?,?,?,?,?,?,?,?,?)";
-                    //Connexion à la base de donnés SQLite
-                    ConnecteSqlite();
+                    String ajout = "INSERT INTO mytable (id,nom,prenom,mention,parcour,niveau,date_naissance,telephone,argent) VALUES(?,?,?,?,?,?,?,?,?)";
+                    ConnecteSupabase();
 
                     try {
                         PreparedStatement pstmt = connexion.prepareStatement(ajout);
@@ -149,7 +152,7 @@ public class Controller {
                         pstmt.setString(5, parcour);
                         pstmt.setString(6, niveau);
                         pstmt.setString(7, dateNaissance);
-                        pstmt.setInt(8, télephone);
+                        pstmt.setString(8, phone);
                         pstmt.setInt(9, Argent);
                         // ligne affiche des clients en tableau
                         int ligne = pstmt.executeUpdate();
@@ -185,30 +188,31 @@ public class Controller {
     }
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // Fonction pour se connecter à la base des donnés (SQLite)
+    // Fonction pour se connecter à Supabase (PostgreSQL)
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    private void ConnecteSqlite() throws ClassNotFoundException, SQLException {
-        try {
-            Class.forName("org.sqlite.JDBC");
-            connexion = DriverManager.getConnection(Url);
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(view, e.getMessage());
+    private void ConnecteSupabase() throws ClassNotFoundException, SQLException {
+        Class.forName("org.postgresql.Driver");
+        String user = System.getenv("SUPABASE_DB_USER");
+        String password = System.getenv("SUPABASE_DB_PASSWORD");
+        if (user == null || user.isBlank() || password == null || password.isBlank()) {
+            throw new SQLException("Variables SUPABASE_DB_USER et SUPABASE_DB_PASSWORD manquantes.");
         }
+        connexion = DriverManager.getConnection(url, user, password);
     }
 
     // Crée la table mytable si elle n'existe pas encore (pratique au premier lancement)
     private void creerTableSiAbsente() throws ClassNotFoundException, SQLException {
-        ConnecteSqlite();
+        ConnecteSupabase();
         String creation = "CREATE TABLE IF NOT EXISTS mytable ("
-                + "Id INTEGER PRIMARY KEY,"
-                + "Nom TEXT,"
-                + "Prénom TEXT,"
-                + "Mention TEXT,"
-                + "Parcour TEXT,"
-                + "Niveau TEXT,"
-                + "Date TEXT,"
-                + "Tél INTEGER,"
-                + "Argent INTEGER"
+                + "id INTEGER PRIMARY KEY,"
+                + "nom TEXT,"
+                + "prenom TEXT,"
+                + "mention TEXT,"
+                + "parcour TEXT,"
+                + "niveau TEXT,"
+                + "date_naissance DATE,"
+                + "telephone TEXT,"
+                + "argent INTEGER"
                 + ")";
         try (PreparedStatement pstmt = connexion.prepareStatement(creation)) {
             pstmt.executeUpdate();
@@ -256,8 +260,8 @@ public class Controller {
             if (validation == JOptionPane.YES_OPTION) {
                 JOptionPane.showMessageDialog(view, "d'après la selectionne,la supprimer est réçue");
                 try {
-                    String supprimer = "DELETE FROM mytable WHERE Id = ?";
-                    ConnecteSqlite();
+                    String supprimer = "DELETE FROM mytable WHERE id = ?";
+                    ConnecteSupabase();
                     PreparedStatement prstmt = connexion.prepareStatement(supprimer);
                     prstmt.setString(1, model.getValueAt(view.getjTableClients().getSelectedRow(), 0).toString());
                     prstmt.executeUpdate();
@@ -280,10 +284,11 @@ public class Controller {
 
     private void Recherche(String rechercheTerm) {
         try {
-            ConnecteSqlite();
-            String rechercheSqlite = "SELECT * FROM mytable WHERE Id LIKE ? OR Nom LIKE ? OR Prénom LIKE ? "
-                    + "OR Mention LIKE ? OR Parcour LIKE ? OR Niveau LIKE ? OR Date LIKE ? OR Tél LIKE ? OR Argent LIKE ?";
-            PreparedStatement stmt = connexion.prepareStatement(rechercheSqlite);
+            ConnecteSupabase();
+            String rechercheSupabase = "SELECT * FROM mytable WHERE CAST(id AS TEXT) LIKE ? OR nom LIKE ? OR prenom LIKE ? "
+                    + "OR mention LIKE ? OR parcour LIKE ? OR niveau LIKE ? OR CAST(date_naissance AS TEXT) LIKE ? "
+                    + "OR telephone LIKE ? OR CAST(argent AS TEXT) LIKE ?";
+            PreparedStatement stmt = connexion.prepareStatement(rechercheSupabase);
             String recherche = "%" + rechercheTerm + "%";
             stmt.setString(1, recherche);
             stmt.setString(2, recherche);
@@ -302,15 +307,15 @@ public class Controller {
             boolean trouve = false;
             while (rs.next()) {
                 trouve = true;
-                String Id = rs.getString("Id");
-                String Nom = rs.getString("Nom");
-                String Prenom = rs.getString("Prénom");
-                String Mentions = rs.getString("Mention");
-                String Parcours = rs.getString("Parcour");
-                String Niveaux = rs.getString("Niveau");
-                String Dates = rs.getString("Date");
-                String Téls = rs.getString("Tél");
-                String Argents = rs.getString("Argent");
+                String Id = rs.getString("id");
+                String Nom = rs.getString("nom");
+                String Prenom = rs.getString("prenom");
+                String Mentions = rs.getString("mention");
+                String Parcours = rs.getString("parcour");
+                String Niveaux = rs.getString("niveau");
+                String Dates = rs.getString("date_naissance");
+                String Téls = rs.getString("telephone");
+                String Argents = rs.getString("argent");
                 tableModel.addRow(new Object[]{Id, Nom, Prenom, Mentions, Parcours, Niveaux, Dates, Téls, Argents});
             }
 
@@ -342,7 +347,12 @@ public class Controller {
         String nouveauMention = view.getjTextFieldMention().getText();
         String nouveauParcour = view.getjTextFieldParcour().getText();
         String nouveauNiveau = view.getjComboBox1().getSelectedItem().toString();
-        String nouveauDate = new SimpleDateFormat("dd / MM /yyyy").format(view.getjDateChoose().getDate());
+        Date dateChoisie = view.getjDateChoose().getDate();
+        if (dateChoisie == null) {
+            JOptionPane.showMessageDialog(view, "Sélectionnez une date de naissance.", "Champ obligatoire", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        String nouveauDate = new SimpleDateFormat("yyyy-MM-dd").format(dateChoisie);
         String nouveauTélephone = view.getjTextFieldTélephone().getText();
         String nouveauArgent = view.getjTextFieldArgent().getText();
         String idASelectionne = view.getjTextFieldId().getText();
@@ -359,11 +369,11 @@ public class Controller {
             if (comp < 1) {
                 try {
 
-                    ConnecteSqlite();
+                    ConnecteSupabase();
                     connexion.setAutoCommit(false);
 
                     // Mise à jour de la ligne correspondant à l'Id sélectionné
-                    String modify = "UPDATE mytable SET Nom = ?, Prénom = ?, Mention = ?, Parcour = ?, Niveau = ?, Date = ?, Tél = ?, Argent = ? WHERE Id = ?";
+                    String modify = "UPDATE mytable SET nom = ?, prenom = ?, mention = ?, parcour = ?, niveau = ?, date_naissance = ?, telephone = ?, argent = ? WHERE id = ?";
                     PreparedStatement stmt = connexion.prepareStatement(modify);
                     stmt.setString(1, nouveauNom);
                     stmt.setString(2, nouveauPrénom);
@@ -371,7 +381,7 @@ public class Controller {
                     stmt.setString(4, nouveauParcour);
                     stmt.setString(5, nouveauNiveau);
                     stmt.setString(6, nouveauDate);
-                    stmt.setInt(7, TEL);
+                    stmt.setString(7, nouveauTélephone);
                     stmt.setInt(8, ARGENT);
                     stmt.setString(9, idASelectionne);
                     stmt.executeUpdate();

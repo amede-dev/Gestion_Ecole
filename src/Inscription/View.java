@@ -1,3 +1,8 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package Inscription;
 
 import com.toedter.calendar.JDateChooser;
@@ -23,50 +28,63 @@ import javax.swing.SwingConstants;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
-
+/**
+ *
+ * @author hp
+ *
+ * Disposition entièrement réécrite à la main (BorderLayout / FlowLayout / BoxLayout)
+ * pour remplacer le GroupLayout généré par NetBeans, illisible et pénible à
+ * réorganiser sans l'éditeur graphique Matisse.
+ */
 public class View extends javax.swing.JFrame {
 
     public View() {
         initComponents();
     }
 
-    @SuppressWarnings("unchecked")
     private void initComponents() {
 
-        //  Couleurs / styles communs 
-        Color bleu = new Color(0, 0, 255);
+        // ===================== Couleurs / styles communs =====================
+        Color fond = Color.decode("#F5F5F5");
+        Color bleuFonce = Color.decode("#2C3E50");
+        Color bleuAccent = Color.decode("#3498DB");
         Color blanc = Color.WHITE;
         Font titreFont = new Font("Times New Roman", Font.BOLD, 24);
         Font labelFont = new Font("Times New Roman", Font.BOLD, 14);
-        final int LARGEUR_CHAMP = 232; // largeur commune à TOUS les champs du formulaire 
+        final int LARGEUR_CHAMP = 232; // largeur commune à TOUS les champs du formulaire (y compris la date)
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Gestion de Personne");
+        setTitle("Gestion d'école");
 
-        //  Panel racine 
+        // ===================== Panel racine =====================
         jPanel1 = new JPanel(new BorderLayout(10, 10));
-        jPanel1.setBackground(bleu);
+        jPanel1.setBackground(fond);
         jPanel1.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // ---------- Titre (NORTH) ----------
-        JLabel jLabel1 = new JLabel("GESTION DE PERSONNE:", SwingConstants.CENTER);
+        JPanel enTete = new JPanel(new BorderLayout());
+        enTete.setBackground(bleuFonce);
+        enTete.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        JLabel jLabel1 = new JLabel("GESTION D'ÉCOLE", SwingConstants.CENTER);
         jLabel1.setFont(titreFont);
         jLabel1.setForeground(blanc);
         try {
             jLabel1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Inscription/group.png")));
         } catch (Exception ignored) {
         }
-        jPanel1.add(jLabel1, BorderLayout.NORTH);
+        enTete.add(jLabel1, BorderLayout.CENTER);
+        jPanel1.add(enTete, BorderLayout.NORTH);
 
         // ---------- Formulaire de saisie (WEST) ----------
         jPanel2 = new JPanel();
-        jPanel2.setOpaque(false);
+        jPanel2.setBackground(blanc);
+        jPanel2.setOpaque(true);
         jPanel2.setLayout(new BoxLayout(jPanel2, BoxLayout.Y_AXIS));
         jPanel2.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder(
                         null, "Inscrire le client", TitledBorder.DEFAULT_JUSTIFICATION,
                         TitledBorder.DEFAULT_POSITION, new Font("Times New Roman", Font.BOLD, 18),
-                        new Color(255, 220, 100)),
+                        bleuFonce),
                 BorderFactory.createEmptyBorder(4, 14, 10, 14)));
 
         jLabel10 = labelFormulaire("Id :", new Font("Times New Roman", Font.BOLD, 18));
@@ -85,7 +103,7 @@ public class View extends javax.swing.JFrame {
         jTextFieldParcour = champTexte(LARGEUR_CHAMP);
 
         JLabel jLabel6 = labelFormulaire("Niveau:", labelFont);
-        jComboBox1 = new JComboBox(new String[]{"L1", "L2", "L3", "M1", "M2", "Docteur"});
+        jComboBox1 = new JComboBox<>(new String[]{"L1", "L2", "L3", "M1", "M2", "Docteur"});
         jComboBox1.setAlignmentX(JComboBox.LEFT_ALIGNMENT);
         jComboBox1.setPreferredSize(new Dimension(LARGEUR_CHAMP, 28));
         jComboBox1.setMaximumSize(new Dimension(LARGEUR_CHAMP, 28));
@@ -139,12 +157,18 @@ public class View extends javax.swing.JFrame {
 
         jPanel1.add(jScrollPaneFormulaire, BorderLayout.WEST);
 
+        // ---------- Zone centrale : tableau + boutons + recherche (CENTER) ----------
         JPanel centre = new JPanel(new BorderLayout(0, 10));
         centre.setOpaque(false);
 
         // Tableau des clients
         jTableClients = new JTable();
-        jTableClients.setForeground(new Color(0, 153, 0));
+        jTableClients.setForeground(bleuFonce);
+        jTableClients.setBackground(blanc);
+        jTableClients.setGridColor(Color.decode("#D6DDE2"));
+        jTableClients.getTableHeader().setBackground(bleuFonce);
+        jTableClients.getTableHeader().setForeground(blanc);
+        jTableClients.getTableHeader().setFont(new Font("Times New Roman", Font.BOLD, 14));
         jTableClients.setModel(new DefaultTableModel(
                 new Object[][]{},
                 new String[]{"Id", "Nom", "Prénom", "Mention", "Parcour", "Niveau", "Date", "Tél", "Argent"}
@@ -163,12 +187,14 @@ public class View extends javax.swing.JFrame {
         jScrollPane1.setPreferredSize(new Dimension(600, 260));
         centre.add(jScrollPane1, BorderLayout.CENTER);
 
-       
-        jButtonAjouter = boutonAction("Ajouter", "/Inscription/ajouter-un-ami.png", new Color(34, 139, 87));
-        jButtonModifier = boutonAction("Modifier", "/Inscription/update.png", new Color(41, 82, 204));
-        jButtonEffacer = boutonAction("Effacer", null, new Color(120, 120, 120));
-        jButtonSupprimer = boutonAction("Supprimer", "/Inscription/delete.png", new Color(200, 40, 40));
-        jButtonFermer = boutonAction("Fermer", "/Inscription/exit.png", new Color(70, 70, 70));
+        // Rangée unique de boutons d'action : Ajouter / Modifier / Effacer / Supprimer / Fermer
+        // Fond de couleur pleine + texte blanc en gras : bon contraste (contrairement à du texte
+        // coloré peu saturé sur fond gris, difficile à lire).
+        jButtonAjouter = boutonAction("Ajouter", "/Inscription/ajouter-un-ami.png", Color.decode("#2ECC71"));
+        jButtonModifier = boutonAction("Modifier", "/Inscription/update.png", Color.decode("#F39C12"));
+        jButtonEffacer = boutonAction("Effacer", null, Color.decode("#95A5A6"));
+        jButtonSupprimer = boutonAction("Supprimer", "/Inscription/delete.png", Color.decode("#E74C3C"));
+        jButtonFermer = boutonAction("Fermer", "/Inscription/exit.png", bleuFonce);
 
         JPanel rangeeActions = new JPanel(new GridLayout(1, 5, 12, 0));
         rangeeActions.setOpaque(false);
@@ -181,7 +207,7 @@ public class View extends javax.swing.JFrame {
 
         // Barre de recherche, sous la rangée de boutons
         jButtonRecherche = new JButton("Recherche");
-        jButtonRecherche.setBackground(new Color(0, 90, 110));
+        jButtonRecherche.setBackground(bleuAccent);
         jButtonRecherche.setFont(new Font("Times New Roman", Font.BOLD, 16));
         jButtonRecherche.setForeground(blanc);
         jButtonRecherche.setOpaque(true);
@@ -198,6 +224,11 @@ public class View extends javax.swing.JFrame {
         });
 
         jTextFieldRecherche = new JTextField();
+        jTextFieldRecherche.setForeground(bleuFonce);
+        jTextFieldRecherche.setBackground(blanc);
+        jTextFieldRecherche.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.decode("#BDC3C7")),
+                BorderFactory.createEmptyBorder(4, 6, 4, 6)));
         jTextFieldRecherche.setPreferredSize(new Dimension(240, 30));
         jTextFieldRecherche.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -210,8 +241,7 @@ public class View extends javax.swing.JFrame {
         jPanel3.add(jButtonRecherche);
         jPanel3.add(jTextFieldRecherche);
 
-        // jPanel4 / jPanel5 conservés pour compatibilité mais fusionnés dans rangeeActions ci-dessus
-        jPanel4 = rangeeActions;
+        // jPanel4 / jPanel5 ont été remplacés par rangeeActions et jPanel3.
         jPanel5 = new JPanel();
         jPanel5.setOpaque(false);
 
@@ -231,19 +261,25 @@ public class View extends javax.swing.JFrame {
         setLocationRelativeTo(null);
     }
 
-    // Crée un label du formulaire en blanc (bon contraste sur le fond bleu du panneau)
+    // Crée un label du formulaire avec le texte bleu foncé de la palette.
     private JLabel labelFormulaire(String texte, Font police) {
         JLabel label = new JLabel(texte);
         label.setFont(police);
-        label.setForeground(Color.WHITE);
+        label.setForeground(Color.decode("#2C3E50"));
         label.setAlignmentX(JLabel.LEFT_ALIGNMENT);
         return label;
     }
 
     // Crée un champ de texte au style standard du formulaire, avec une largeur fixe
+    // pour que TOUS les champs (y compris la date) soient parfaitement alignés.
     private JTextField champTexte(int largeur) {
         JTextField champ = new JTextField();
         champ.setFont(new Font("Times New Roman", Font.BOLD, 12));
+        champ.setForeground(Color.decode("#2C3E50"));
+        champ.setBackground(Color.WHITE);
+        champ.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.decode("#BDC3C7")),
+                BorderFactory.createEmptyBorder(4, 6, 4, 6)));
         champ.setPreferredSize(new Dimension(largeur, 26));
         champ.setMaximumSize(new Dimension(largeur, 26));
         champ.setAlignmentX(JTextField.LEFT_ALIGNMENT);
@@ -251,6 +287,7 @@ public class View extends javax.swing.JFrame {
     }
 
     // Crée un bouton d'action au style standard : fond de couleur pleine + texte
+    // blanc en gras, largeur suffisante pour ne jamais tronquer le libellé.
     private JButton boutonAction(String texte, String iconePath, Color couleurFond) {
         JButton bouton = new JButton(texte);
         bouton.setBackground(couleurFond);
@@ -302,7 +339,7 @@ public class View extends javax.swing.JFrame {
         this.getjComboBox1().setSelectedItem(niveauUtile);
 
         try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd / MM /yyyy");
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             Date date = dateFormat.parse(dateUtile);
             this.getjDateChoose().setDate(date);
         } catch (Exception e) {
@@ -329,7 +366,7 @@ public class View extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 View view = new View();
-                Controller controller = new Controller(view);
+                new Controller(view);
                 view.setVisible(true);
             }
         });
@@ -356,7 +393,7 @@ public class View extends javax.swing.JFrame {
         return jTextFieldParcour;
     }
 
-    public JComboBox getjComboBox1() {
+    public JComboBox<String> getjComboBox1() {
         return jComboBox1;
     }
 
@@ -411,14 +448,13 @@ public class View extends javax.swing.JFrame {
     private JButton jButtonModifier;
     private JButton jButtonRecherche;
     private JButton jButtonSupprimer;
-    private JComboBox jComboBox1;
+    private JComboBox<String> jComboBox1;
     private JDateChooser jDateChoose;
     private JLabel jLabel10;
     private JLabel jLabel2;
     private JPanel jPanel1;
     private JPanel jPanel2;
     private JPanel jPanel3;
-    private JPanel jPanel4;
     private JPanel jPanel5;
     private JScrollPane jScrollPane1;
     private JScrollPane jScrollPaneFormulaire;
