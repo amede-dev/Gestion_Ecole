@@ -61,7 +61,7 @@ function App() {
 
   return (
     <main className="app-shell">
-      <header className="app-header"><span className="header-icon">🎓</span><div><h1>GESTION D&apos;ÉCOLE</h1><p>Inscription et suivi des étudiants</p></div></header>
+      <header className="app-header"><span className="header-icon" aria-hidden="true">🎓</span><div><h1>GESTION D&apos;ÉCOLE</h1><p>Inscription et suivi des étudiants</p></div></header>
       <div className="content-grid">
         <section className="card form-card">
           <h2>Inscrire un étudiant</h2>
@@ -80,7 +80,13 @@ function App() {
         <section className="card table-card"><div className="table-toolbar"><div><h2>Liste des étudiants</h2><span className="count">{visibleStudents.length} résultat(s)</span></div><input className="search" placeholder="Rechercher..." value={search} onChange={(event) => setSearch(event.target.value)} /></div><p className="status">{message}</p>
           <div className="table-wrap"><table><thead><tr>{['ID', 'Nom', 'Prénom', 'Mention', 'Parcours', 'Niveau', 'Date', 'Téléphone', 'Argent', 'Action'].map((heading) => <th key={heading}>{heading}</th>)}</tr></thead><tbody>
             {visibleStudents.length === 0 ? <tr><td className="empty" colSpan="10">Aucun étudiant trouvé</td></tr> : visibleStudents.map((student) => <tr key={student.id} onClick={() => selectStudent(student)} className={Number(form.id) === student.id ? 'selected' : ''}><td>{student.id}</td><td>{student.nom}</td><td>{student.prenom}</td><td>{student.mention}</td><td>{student.parcour}</td><td>{student.niveau}</td><td>{student.date_naissance}</td><td>{student.telephone}</td><td>{student.argent.toLocaleString('fr-FR')} Ar</td><td><button className="delete-link" type="button" onClick={(event) => { event.stopPropagation(); deleteStudent(student.id) }}>Supprimer</button></td></tr>)}
-          </tbody></table></div><small className="hint">Clique sur une ligne pour la modifier.</small>
+          </tbody></table></div>
+          <div className="student-list" aria-label="Liste mobile des étudiants">
+            {visibleStudents.length === 0 ? <p className="empty">Aucun étudiant trouvé</p> : visibleStudents.map((student) => <article className={`student-card ${Number(form.id) === student.id ? 'selected' : ''}`} key={student.id} onClick={() => selectStudent(student)}>
+              <div className="student-card-header"><div><strong>{student.prenom} {student.nom}</strong><span>ID {student.id} · {student.niveau}</span></div><button className="delete-button" type="button" onClick={(event) => { event.stopPropagation(); deleteStudent(student.id) }}>Supprimer</button></div>
+              <dl><div><dt>Mention</dt><dd>{student.mention || '—'}</dd></div><div><dt>Parcours</dt><dd>{student.parcour || '—'}</dd></div><div><dt>Téléphone</dt><dd>{student.telephone}</dd></div><div><dt>Argent</dt><dd>{student.argent.toLocaleString('fr-FR')} Ar</dd></div></dl>
+            </article>)}
+          </div><small className="hint">Touchez une fiche pour la modifier.</small>
         </section>
       </div>
     </main>
