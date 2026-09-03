@@ -74,8 +74,18 @@ function App() {
 
   async function saveStudent(event) {
     event.preventDefault()
-    if (!form.id || !form.nom || !form.prenom || !form.telephone || !form.date_naissance) {
-      setMessage('Complète les champs obligatoires : ID, nom, prénom, téléphone et date.')
+    const requiredFields = [['id', 'ID'], ['nom', 'nom'], ['prenom', 'prénom'], ['mention', 'mention'], ['parcour', 'parcours'], ['date_naissance', 'date de naissance'], ['telephone', 'téléphone'], ['argent', 'argent']]
+    const missingField = requiredFields.find(([field]) => !String(form[field]).trim())
+    if (missingField) {
+      setMessage(`Champ obligatoire : complétez le champ « ${missingField[1]} ».`)
+      return
+    }
+    if (!/^\d{10}$/.test(String(form.telephone).trim())) {
+      setMessage('Le téléphone doit contenir exactement 10 chiffres.')
+      return
+    }
+    if (!/^\d+$/.test(String(form.id).trim()) || !/^\d+$/.test(String(form.argent).trim())) {
+      setMessage('ID et argent doivent être des nombres entiers positifs.')
       return
     }
     const student = { ...form, id: Number(form.id), argent: Number(form.argent || 0) }
@@ -177,7 +187,7 @@ function App() {
             <label>Date de naissance<input name="date_naissance" value={form.date_naissance} onChange={updateField} type="date" /></label>
             <label>Téléphone<input name="telephone" value={form.telephone} onChange={updateField} /></label>
             <label>Argent<input name="argent" value={form.argent} onChange={updateField} type="number" min="0" /></label>
-          </div><div className="action-row"><button className="button success" type="submit">{editing ? '✓ Modifier' : '＋ Ajouter'}</button><button className="button neutral" type="button" onClick={clearForm}>Effacer</button></div></form>
+          </div><div className="action-row"><button className="button success" type="submit">{editing ? '✓ Modifier' : '＋ Ajouter'}</button><button className="button neutral" type="button" onClick={clearForm}>Effacer</button></div><p className="form-feedback" role="status">{message}</p></form>
         </section>
         <section className="card table-card"><div className="table-toolbar"><div><h2>Liste des étudiants</h2><span className="count">{visibleStudents.length} résultat(s)</span></div><div className="table-actions"><input className="search" placeholder="Rechercher puis appuyer sur Entrée" value={search} onChange={(event) => setSearch(event.target.value)} onKeyDown={handleSearchKeyDown} /><button className="table-delete-button" type="button" onClick={() => deleteStudent(editing ? Number(form.id) : null)}>Supprimer</button></div></div><p className="status">{message}</p>
           <div className="table-wrap"><table><thead><tr>{['ID', 'Nom', 'Prénom', 'Mention', 'Parcours', 'Niveau', 'Date', 'Téléphone', 'Argent', 'Action'].map((heading) => <th key={heading}>{heading}</th>)}</tr></thead><tbody>
