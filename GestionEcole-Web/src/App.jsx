@@ -5,19 +5,11 @@ import { supabase } from './lib/supabase'
 const emptyStudent = { id: '', nom: '', prenom: '', mention: '', parcour: '', niveau: 'L1', date_naissance: '', telephone: '', argent: '' }
 
 function App() {
-<<<<<<< HEAD
-  const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('gestion-ecole-auth') === 'true')
-  const [login, setLogin] = useState({ identifiant: '', password: '' })
-  const [showPassword, setShowPassword] = useState(false)
-  const [loginError, setLoginError] = useState('')
-  const [students, setStudents] = useState(demoStudents)
-=======
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [login, setLogin] = useState({ identifiant: '', password: '' })
   const [showPassword, setShowPassword] = useState(false)
   const [loginError, setLoginError] = useState('')
   const [students, setStudents] = useState([])
->>>>>>> 2752467 (Connexion Supabase et suppression des données démo)
   const [form, setForm] = useState(emptyStudent)
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState(false)
@@ -45,22 +37,6 @@ function App() {
     return term ? students.filter((student) => Object.values(student).some((value) => String(value).toLowerCase().includes(term))) : students
   }, [search, students])
 
-<<<<<<< HEAD
-  function handleLogin(event) {
-    event.preventDefault()
-    if (login.identifiant.trim().toLowerCase() !== 'admin' || login.password !== 'admin123') {
-      setLoginError('Identifiant ou mot de passe incorrect.')
-      return
-    }
-    sessionStorage.setItem('gestion-ecole-auth', 'true')
-    setIsAuthenticated(true)
-    setLoginError('')
-  }
-
-  function handleLogout() {
-    sessionStorage.removeItem('gestion-ecole-auth')
-    setIsAuthenticated(false)
-=======
   async function handleLogin(event) {
     event.preventDefault()
     if (!supabase) {
@@ -75,7 +51,6 @@ function App() {
 
   async function handleLogout() {
     await supabase?.auth.signOut()
->>>>>>> 2752467 (Connexion Supabase et suppression des données démo)
     setLogin({ identifiant: '', password: '' })
   }
 
