@@ -43,7 +43,12 @@ function App() {
       setLoginError('Connexion Supabase non configurée. Ajoutez les variables VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY.')
       return
     }
-    const email = login.identifiant.includes('@') ? login.identifiant.trim() : `${login.identifiant.trim().toLowerCase()}@gestionecole.local`
+    const identifier = login.identifiant.trim().toLowerCase()
+    const email = identifier === 'admin' ? 'admingestionecole@gmail.com' : identifier
+    if (!email.includes('@')) {
+      setLoginError('Saisissez une adresse e-mail valide.')
+      return
+    }
     const { error } = await supabase.auth.signInWithPassword({ email, password: login.password })
     if (error) setLoginError('Identifiant ou mot de passe incorrect.')
     else setLoginError('')
@@ -122,7 +127,7 @@ function App() {
           <div className="login-brand"><span className="login-icon" aria-hidden="true">🎓</span><span>GESTION D&apos;ÉCOLE</span></div>
           <div className="login-heading"><p className="eyebrow">ESPACE ADMINISTRATIF</p><h1 id="login-title">Bienvenue</h1><p>Connectez-vous pour gérer les étudiants et les données de votre établissement.</p></div>
           <form className="login-form" onSubmit={handleLogin}>
-            <label htmlFor="identifiant">Identifiant<input id="identifiant" name="identifiant" value={login.identifiant} onChange={(event) => { setLogin({ ...login, identifiant: event.target.value }); setLoginError('') }} placeholder="Votre identifiant" autoComplete="username" autoFocus required /></label>
+            <label htmlFor="identifiant">Adresse e-mail<input id="identifiant" name="identifiant" value={login.identifiant} onChange={(event) => { setLogin({ ...login, identifiant: event.target.value }); setLoginError('') }} type="email" placeholder="admingestionecole@gmail.com" autoComplete="username" autoFocus required /></label>
             <label htmlFor="password">Mot de passe<div className="password-field"><input id="password" name="password" value={login.password} onChange={(event) => { setLogin({ ...login, password: event.target.value }); setLoginError('') }} type={showPassword ? 'text' : 'password'} placeholder="Votre mot de passe" autoComplete="current-password" required /><button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}>{showPassword ? 'Masquer' : 'Afficher'}</button></div></label>
             {loginError && <p className="login-error" role="alert">{loginError}</p>}
             <button className="login-button" type="submit">Se connecter <span aria-hidden="true">→</span></button>
