@@ -61,9 +61,19 @@ function App() {
   }
 
   async function handleLogout() {
-    if (!window.confirm('Voulez-vous vraiment vous déconnecter ?')) return
-    await supabase?.auth.signOut()
-    setLogin({ identifiant: '', password: '' })
+    setDialog({ title: 'Confirmer la déconnexion', text: 'Voulez-vous vraiment vous déconnecter ?', type: 'confirm', action: 'logout' })
+  }
+
+  async function confirmDialogAction() {
+    if (dialog?.action === 'logout') {
+      setDialog(null)
+      await supabase?.auth.signOut()
+      setLogin({ identifiant: '', password: '' })
+    } else if (dialog?.action === 'delete') {
+      const studentId = dialog.id
+      setDialog(null)
+      await performDelete(studentId)
+    }
   }
 
   function updateField(event) {
@@ -135,7 +145,10 @@ function App() {
       showDialog('Suppression impossible', 'Sélectionnez un étudiant avant de le supprimer.')
       return
     }
-    if (!window.confirm('Voulez-vous vraiment supprimer cet étudiant ?')) return
+    setDialog({ title: 'Confirmer la suppression', text: 'Voulez-vous vraiment supprimer cet étudiant ?', type: 'confirm', action: 'delete', id })
+  }
+
+  async function performDelete(id) {
     if (!supabase) return
     const { error } = await supabase.from('mytable').delete().eq('id', id)
     if (error) {
@@ -152,11 +165,11 @@ function App() {
     event.preventDefault()
     const term = search.trim().toLowerCase()
     if (!term) {
-      setMessage('Recherche réinitialisée')
+      showDialog('Recherche', 'Recherche réinitialisée.', 'success')
       return
     }
     const resultCount = students.filter((student) => Object.values(student).some((value) => String(value).toLowerCase().includes(term))).length
-    setMessage(resultCount === 0 ? `Aucun étudiant trouvé pour « ${search.trim()} »` : `${resultCount} résultat(s) trouvé(s)`)
+    showDialog('Recherche', resultCount === 0 ? `Aucun étudiant trouvé pour « ${search.trim()} »` : `${resultCount} résultat(s) trouvé(s)`, resultCount === 0 ? 'error' : 'success')
   }
 
   if (!isAuthenticated) {
@@ -179,7 +192,7 @@ function App() {
 
   return (
     <main className="app-shell">
-      {dialog && <div className="dialog-backdrop" role="presentation"><section className={`alert-dialog ${dialog.type}`} role="alertdialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-message"><div className="dialog-symbol" aria-hidden="true">{dialog.type === 'success' ? '✓' : '!'}</div><div className="dialog-content"><h2 id="dialog-title">{dialog.title}</h2><p id="dialog-message">{dialog.text}</p><button className="dialog-button" type="button" autoFocus onClick={() => setDialog(null)}>OK</button></div></section></div>}
+      {dialog && <div className="dialog-backdrop" role="presentation"><section className={`alert-dialog ${dialog.type}`} role="alertdialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-message"><div className="dialog-symbol" aria-hidden="true">{dialog.type === 'success' ? '✓' : dialog.type === 'confirm' ? '?' : '!'}</div><div className="dialog-content"><h2 id="dialog-title">{dialog.title}</h2><p id="dialog-message">{dialog.text}</p><div className="dialog-actions">{dialog.type === 'confirm' && <button className="dialog-cancel" type="button" onClick={() => setDialog(null)}>Annuler</button>}<button className="dialog-button" type="button" autoFocus onClick={dialog.type === 'confirm' ? confirmDialogAction : () => setDialog(null)}>{dialog.type === 'confirm' ? 'Confirmer' : 'OK'}</button></div></div></section></div>}
       <header className="app-header"><span className="header-icon" aria-hidden="true">🎓</span><div><h1>GESTION D&apos;ÉCOLE</h1><p>Inscription et suivi des étudiants</p></div><button className="logout-button" type="button" onClick={handleLogout}>Déconnexion</button></header>
       <div className="content-grid">
         <section className="card form-card">
