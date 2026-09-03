@@ -87,6 +87,11 @@ function App() {
     setMessage(statusMessage)
   }
 
+  function handleClearForm() {
+    clearForm()
+    showDialog('Formulaire effacé', 'Tous les champs du formulaire étudiant ont été vidés.', 'success')
+  }
+
   async function saveStudent(event) {
     event.preventDefault()
     const requiredFields = [['id', 'ID'], ['nom', 'nom'], ['prenom', 'prénom'], ['mention', 'mention'], ['parcour', 'parcours'], ['date_naissance', 'date de naissance'], ['telephone', 'téléphone'], ['argent', 'argent']]
@@ -165,10 +170,12 @@ function App() {
     event.preventDefault()
     const term = search.trim().toLowerCase()
     if (!term) {
+      setSearch('')
       showDialog('Recherche', 'Recherche réinitialisée.', 'success')
       return
     }
     const resultCount = students.filter((student) => Object.values(student).some((value) => String(value).toLowerCase().includes(term))).length
+    setSearch('')
     showDialog('Recherche', resultCount === 0 ? `Aucun étudiant trouvé pour « ${search.trim()} »` : `${resultCount} résultat(s) trouvé(s)`, resultCount === 0 ? 'error' : 'success')
   }
 
@@ -207,7 +214,7 @@ function App() {
             <label>Date de naissance<input name="date_naissance" value={form.date_naissance} onChange={updateField} type="date" /></label>
             <label>Téléphone<input name="telephone" value={form.telephone} onChange={updateField} /></label>
             <label>Argent<input name="argent" value={form.argent} onChange={updateField} type="number" min="0" /></label>
-          </div><div className="action-row"><button className="button success" type="submit">{editing ? '✓ Modifier' : '＋ Ajouter'}</button><button className="button neutral" type="button" onClick={clearForm}>Effacer</button></div></form>
+          </div><div className="action-row"><button className="button success" type="submit">{editing ? '✓ Modifier' : '＋ Ajouter'}</button><button className="button neutral" type="button" onClick={handleClearForm}>Effacer</button></div></form>
         </section>
         <section className="card table-card"><div className="table-toolbar"><div><h2>Liste des étudiants</h2><span className="count">{visibleStudents.length} résultat(s)</span></div><div className="table-actions"><input className="search" placeholder="Rechercher puis appuyer sur Entrée" value={search} onChange={(event) => setSearch(event.target.value)} onKeyDown={handleSearchKeyDown} /><button className="table-delete-button" type="button" onClick={() => deleteStudent(editing ? Number(form.id) : null)}>Supprimer</button></div></div><p className="status">{message}</p>
           <div className="table-wrap"><table><thead><tr>{['ID', 'Nom', 'Prénom', 'Mention', 'Parcours', 'Niveau', 'Date', 'Téléphone', 'Argent', 'Action'].map((heading) => <th key={heading}>{heading}</th>)}</tr></thead><tbody>
