@@ -1,25 +1,51 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
+import { supabase } from './lib/supabase'
 
 const emptyStudent = { id: '', nom: '', prenom: '', mention: '', parcour: '', niveau: 'L1', date_naissance: '', telephone: '', argent: '' }
-const demoStudents = [{ id: 1, nom: 'Rakoto', prenom: 'Aina', mention: 'Informatique', parcour: 'Développement', niveau: 'L1', date_naissance: '2003-05-14', telephone: '0340000000', argent: 150000 }]
 
 function App() {
+<<<<<<< HEAD
   const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('gestion-ecole-auth') === 'true')
   const [login, setLogin] = useState({ identifiant: '', password: '' })
   const [showPassword, setShowPassword] = useState(false)
   const [loginError, setLoginError] = useState('')
   const [students, setStudents] = useState(demoStudents)
+=======
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [login, setLogin] = useState({ identifiant: '', password: '' })
+  const [showPassword, setShowPassword] = useState(false)
+  const [loginError, setLoginError] = useState('')
+  const [students, setStudents] = useState([])
+>>>>>>> 2752467 (Connexion Supabase et suppression des données démo)
   const [form, setForm] = useState(emptyStudent)
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState(false)
-  const [message, setMessage] = useState('Mode démo local')
+  const [message, setMessage] = useState('Base de données Supabase')
+
+  useEffect(() => {
+    if (!supabase) return undefined
+    supabase.auth.getSession().then(({ data: { session } }) => setIsAuthenticated(Boolean(session)))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setIsAuthenticated(Boolean(session)))
+    return () => subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    if (!isAuthenticated || !supabase) return
+    async function loadStudents() {
+      const { data, error } = await supabase.from('mytable').select('*').order('id')
+      if (error) setMessage(`Impossible de charger les étudiants : ${error.message}`)
+      else setStudents(data ?? [])
+    }
+    loadStudents()
+  }, [isAuthenticated])
 
   const visibleStudents = useMemo(() => {
     const term = search.trim().toLowerCase()
     return term ? students.filter((student) => Object.values(student).some((value) => String(value).toLowerCase().includes(term))) : students
   }, [search, students])
 
+<<<<<<< HEAD
   function handleLogin(event) {
     event.preventDefault()
     if (login.identifiant.trim().toLowerCase() !== 'admin' || login.password !== 'admin123') {
@@ -34,6 +60,22 @@ function App() {
   function handleLogout() {
     sessionStorage.removeItem('gestion-ecole-auth')
     setIsAuthenticated(false)
+=======
+  async function handleLogin(event) {
+    event.preventDefault()
+    if (!supabase) {
+      setLoginError('Connexion Supabase non configurée. Ajoutez les variables VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY.')
+      return
+    }
+    const email = login.identifiant.includes('@') ? login.identifiant.trim() : `${login.identifiant.trim().toLowerCase()}@gestionecole.local`
+    const { error } = await supabase.auth.signInWithPassword({ email, password: login.password })
+    if (error) setLoginError('Identifiant ou mot de passe incorrect.')
+    else setLoginError('')
+  }
+
+  async function handleLogout() {
+    await supabase?.auth.signOut()
+>>>>>>> 2752467 (Connexion Supabase et suppression des données démo)
     setLogin({ identifiant: '', password: '' })
   }
 
@@ -48,19 +90,31 @@ function App() {
     setMessage('Formulaire effacé')
   }
 
-  function saveStudent(event) {
+  async function saveStudent(event) {
     event.preventDefault()
     if (!form.id || !form.nom || !form.prenom || !form.telephone || !form.date_naissance) {
       setMessage('Complète les champs obligatoires : ID, nom, prénom, téléphone et date.')
       return
     }
     const student = { ...form, id: Number(form.id), argent: Number(form.argent || 0) }
+    if (!supabase) {
+      setMessage('Base de données non configurée')
+      return
+    }
+    if (!editing && students.some((item) => item.id === student.id)) {
+      setMessage('Cet ID existe déjà')
+      return
+    }
+    const { error } = editing
+      ? await supabase.from('mytable').update(student).eq('id', student.id)
+      : await supabase.from('mytable').insert(student)
+    if (error) {
+      setMessage(`Enregistrement impossible : ${error.message}`)
+      return
+    }
     if (editing) {
       setStudents((current) => current.map((item) => (item.id === student.id ? student : item)))
       setMessage('Étudiant modifié avec succès')
-    } else if (students.some((item) => item.id === student.id)) {
-      setMessage('Cet ID existe déjà')
-      return
     } else {
       setStudents((current) => [...current, student])
       setMessage('Étudiant ajouté avec succès')
@@ -74,7 +128,13 @@ function App() {
     setMessage(`Modification de ${student.nom} ${student.prenom}`)
   }
 
-  function deleteStudent(id) {
+  async function deleteStudent(id) {
+    if (!supabase) return
+    const { error } = await supabase.from('mytable').delete().eq('id', id)
+    if (error) {
+      setMessage(`Suppression impossible : ${error.message}`)
+      return
+    }
     setStudents((current) => current.filter((student) => student.id !== id))
     if (Number(form.id) === id) clearForm()
     setMessage('Étudiant supprimé')
