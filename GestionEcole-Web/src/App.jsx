@@ -5,6 +5,10 @@ const emptyStudent = { id: '', nom: '', prenom: '', mention: '', parcour: '', ni
 const demoStudents = [{ id: 1, nom: 'Rakoto', prenom: 'Aina', mention: 'Informatique', parcour: 'Développement', niveau: 'L1', date_naissance: '2003-05-14', telephone: '0340000000', argent: 150000 }]
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => sessionStorage.getItem('gestion-ecole-auth') === 'true')
+  const [login, setLogin] = useState({ identifiant: '', password: '' })
+  const [showPassword, setShowPassword] = useState(false)
+  const [loginError, setLoginError] = useState('')
   const [students, setStudents] = useState(demoStudents)
   const [form, setForm] = useState(emptyStudent)
   const [search, setSearch] = useState('')
@@ -15,6 +19,23 @@ function App() {
     const term = search.trim().toLowerCase()
     return term ? students.filter((student) => Object.values(student).some((value) => String(value).toLowerCase().includes(term))) : students
   }, [search, students])
+
+  function handleLogin(event) {
+    event.preventDefault()
+    if (login.identifiant.trim().toLowerCase() !== 'admin' || login.password !== 'admin123') {
+      setLoginError('Identifiant ou mot de passe incorrect.')
+      return
+    }
+    sessionStorage.setItem('gestion-ecole-auth', 'true')
+    setIsAuthenticated(true)
+    setLoginError('')
+  }
+
+  function handleLogout() {
+    sessionStorage.removeItem('gestion-ecole-auth')
+    setIsAuthenticated(false)
+    setLogin({ identifiant: '', password: '' })
+  }
 
   function updateField(event) {
     const { name, value } = event.target
@@ -59,9 +80,27 @@ function App() {
     setMessage('Étudiant supprimé')
   }
 
+  if (!isAuthenticated) {
+    return (
+      <main className="login-page">
+        <section className="login-card" aria-labelledby="login-title">
+          <div className="login-brand"><span className="login-icon" aria-hidden="true">🎓</span><span>GESTION D&apos;ÉCOLE</span></div>
+          <div className="login-heading"><p className="eyebrow">ESPACE ADMINISTRATIF</p><h1 id="login-title">Bienvenue</h1><p>Connectez-vous pour gérer les étudiants et les données de votre établissement.</p></div>
+          <form className="login-form" onSubmit={handleLogin}>
+            <label htmlFor="identifiant">Identifiant<input id="identifiant" name="identifiant" value={login.identifiant} onChange={(event) => { setLogin({ ...login, identifiant: event.target.value }); setLoginError('') }} placeholder="Votre identifiant" autoComplete="username" autoFocus required /></label>
+            <label htmlFor="password">Mot de passe<div className="password-field"><input id="password" name="password" value={login.password} onChange={(event) => { setLogin({ ...login, password: event.target.value }); setLoginError('') }} type={showPassword ? 'text' : 'password'} placeholder="Votre mot de passe" autoComplete="current-password" required /><button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}>{showPassword ? 'Masquer' : 'Afficher'}</button></div></label>
+            {loginError && <p className="login-error" role="alert">{loginError}</p>}
+            <button className="login-button" type="submit">Se connecter <span aria-hidden="true">→</span></button>
+          </form>
+          <p className="login-note"><span aria-hidden="true">🔒</span> Accès réservé aux administrateurs</p>
+        </section>
+      </main>
+    )
+  }
+
   return (
     <main className="app-shell">
-      <header className="app-header"><span className="header-icon" aria-hidden="true">🎓</span><div><h1>GESTION D&apos;ÉCOLE</h1><p>Inscription et suivi des étudiants</p></div></header>
+      <header className="app-header"><span className="header-icon" aria-hidden="true">🎓</span><div><h1>GESTION D&apos;ÉCOLE</h1><p>Inscription et suivi des étudiants</p></div><button className="logout-button" type="button" onClick={handleLogout}>Déconnexion</button></header>
       <div className="content-grid">
         <section className="card form-card">
           <h2>Inscrire un étudiant</h2>
