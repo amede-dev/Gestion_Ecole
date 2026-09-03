@@ -15,6 +15,11 @@ function App() {
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState(false)
   const [message, setMessage] = useState('Base de données Supabase')
+  const [dialog, setDialog] = useState(null)
+
+  function showDialog(title, text, type = 'error') {
+    setDialog({ title, text, type })
+  }
 
   useEffect(() => {
     if (!supabase) return undefined
@@ -77,31 +82,31 @@ function App() {
     const requiredFields = [['id', 'ID'], ['nom', 'nom'], ['prenom', 'prénom'], ['mention', 'mention'], ['parcour', 'parcours'], ['date_naissance', 'date de naissance'], ['telephone', 'téléphone'], ['argent', 'argent']]
     const missingField = requiredFields.find(([field]) => !String(form[field]).trim())
     if (missingField) {
-      setMessage(`Champ obligatoire : complétez le champ « ${missingField[1]} ».`)
+      showDialog('Champ obligatoire', `Complétez le champ « ${missingField[1]} ».`)
       return
     }
     if (!/^\d{10}$/.test(String(form.telephone).trim())) {
-      setMessage('Le téléphone doit contenir exactement 10 chiffres.')
+      showDialog('Donnée invalide', 'Le téléphone doit contenir exactement 10 chiffres.')
       return
     }
     if (!/^\d+$/.test(String(form.id).trim()) || !/^\d+$/.test(String(form.argent).trim())) {
-      setMessage('ID et argent doivent être des nombres entiers positifs.')
+      showDialog('Donnée invalide', 'ID et argent doivent être des nombres entiers positifs.')
       return
     }
     const student = { ...form, id: Number(form.id), argent: Number(form.argent || 0) }
     if (!supabase) {
-      setMessage('Base de données non configurée')
+      showDialog('Erreur de connexion', 'La base de données Supabase n’est pas configurée.')
       return
     }
     if (!editing && students.some((item) => item.id === student.id)) {
-      setMessage('Cet ID existe déjà')
+      showDialog('ID déjà utilisé', 'Cet ID existe déjà dans la base de données.')
       return
     }
     const { error } = editing
       ? await supabase.from('mytable').update(student).eq('id', student.id)
       : await supabase.from('mytable').insert(student)
     if (error) {
-      setMessage(`Enregistrement impossible : ${error.message}`)
+      showDialog('Enregistrement impossible', error.message)
       return
     }
     if (editing) {
@@ -112,6 +117,7 @@ function App() {
       setMessage('Étudiant ajouté avec succès')
     }
     clearForm(editing ? 'Étudiant modifié avec succès' : 'Étudiant ajouté avec succès')
+    showDialog('Opération réussie', editing ? 'Étudiant modifié avec succès.' : 'Étudiant ajouté avec succès.', 'success')
   }
 
   function selectStudent(student) {
@@ -122,23 +128,23 @@ function App() {
 
   async function deleteStudent(id) {
     if (students.length === 0) {
-      setMessage('La table est vide : aucun étudiant à supprimer.')
+      showDialog('Table vide', 'La table est vide : aucun étudiant à supprimer.')
       return
     }
     if (id == null) {
-      setMessage('Sélectionnez un étudiant avant de le supprimer.')
+      showDialog('Suppression impossible', 'Sélectionnez un étudiant avant de le supprimer.')
       return
     }
     if (!window.confirm('Voulez-vous vraiment supprimer cet étudiant ?')) return
     if (!supabase) return
     const { error } = await supabase.from('mytable').delete().eq('id', id)
     if (error) {
-      setMessage(`Suppression impossible : ${error.message}`)
+      showDialog('Suppression impossible', error.message)
       return
     }
     setStudents((current) => current.filter((student) => student.id !== id))
     if (Number(form.id) === id) clearForm()
-    setMessage('Étudiant supprimé')
+    showDialog('Suppression réussie', 'L’étudiant a été supprimé.', 'success')
   }
 
   function handleSearchKeyDown(event) {
@@ -173,6 +179,7 @@ function App() {
 
   return (
     <main className="app-shell">
+      {dialog && <div className="dialog-backdrop" role="presentation"><section className={`alert-dialog ${dialog.type}`} role="alertdialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-message"><div className="dialog-symbol" aria-hidden="true">{dialog.type === 'success' ? '✓' : '!'}</div><div className="dialog-content"><h2 id="dialog-title">{dialog.title}</h2><p id="dialog-message">{dialog.text}</p><button className="dialog-button" type="button" autoFocus onClick={() => setDialog(null)}>OK</button></div></section></div>}
       <header className="app-header"><span className="header-icon" aria-hidden="true">🎓</span><div><h1>GESTION D&apos;ÉCOLE</h1><p>Inscription et suivi des étudiants</p></div><button className="logout-button" type="button" onClick={handleLogout}>Déconnexion</button></header>
       <div className="content-grid">
         <section className="card form-card">
@@ -187,7 +194,7 @@ function App() {
             <label>Date de naissance<input name="date_naissance" value={form.date_naissance} onChange={updateField} type="date" /></label>
             <label>Téléphone<input name="telephone" value={form.telephone} onChange={updateField} /></label>
             <label>Argent<input name="argent" value={form.argent} onChange={updateField} type="number" min="0" /></label>
-          </div><div className="action-row"><button className="button success" type="submit">{editing ? '✓ Modifier' : '＋ Ajouter'}</button><button className="button neutral" type="button" onClick={clearForm}>Effacer</button></div><p className="form-feedback" role="status">{message}</p></form>
+          </div><div className="action-row"><button className="button success" type="submit">{editing ? '✓ Modifier' : '＋ Ajouter'}</button><button className="button neutral" type="button" onClick={clearForm}>Effacer</button></div></form>
         </section>
         <section className="card table-card"><div className="table-toolbar"><div><h2>Liste des étudiants</h2><span className="count">{visibleStudents.length} résultat(s)</span></div><div className="table-actions"><input className="search" placeholder="Rechercher puis appuyer sur Entrée" value={search} onChange={(event) => setSearch(event.target.value)} onKeyDown={handleSearchKeyDown} /><button className="table-delete-button" type="button" onClick={() => deleteStudent(editing ? Number(form.id) : null)}>Supprimer</button></div></div><p className="status">{message}</p>
           <div className="table-wrap"><table><thead><tr>{['ID', 'Nom', 'Prénom', 'Mention', 'Parcours', 'Niveau', 'Date', 'Téléphone', 'Argent', 'Action'].map((heading) => <th key={heading}>{heading}</th>)}</tr></thead><tbody>
