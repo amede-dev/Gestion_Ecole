@@ -66,10 +66,10 @@ function App() {
     setForm((current) => ({ ...current, [name]: value }))
   }
 
-  function clearForm() {
+  function clearForm(statusMessage = 'Formulaire effacé') {
     setForm(emptyStudent)
     setEditing(false)
-    setMessage('Formulaire effacé')
+    setMessage(statusMessage)
   }
 
   async function saveStudent(event) {
@@ -101,7 +101,7 @@ function App() {
       setStudents((current) => [...current, student])
       setMessage('Étudiant ajouté avec succès')
     }
-    clearForm()
+    clearForm(editing ? 'Étudiant modifié avec succès' : 'Étudiant ajouté avec succès')
   }
 
   function selectStudent(student) {
@@ -111,6 +111,15 @@ function App() {
   }
 
   async function deleteStudent(id) {
+    if (students.length === 0) {
+      setMessage('La table est vide : aucun étudiant à supprimer.')
+      return
+    }
+    if (id == null) {
+      setMessage('Sélectionnez un étudiant avant de le supprimer.')
+      return
+    }
+    if (!window.confirm('Voulez-vous vraiment supprimer cet étudiant ?')) return
     if (!supabase) return
     const { error } = await supabase.from('mytable').delete().eq('id', id)
     if (error) {
@@ -120,6 +129,18 @@ function App() {
     setStudents((current) => current.filter((student) => student.id !== id))
     if (Number(form.id) === id) clearForm()
     setMessage('Étudiant supprimé')
+  }
+
+  function handleSearchKeyDown(event) {
+    if (event.key !== 'Enter') return
+    event.preventDefault()
+    const term = search.trim().toLowerCase()
+    if (!term) {
+      setMessage('Recherche réinitialisée')
+      return
+    }
+    const resultCount = students.filter((student) => Object.values(student).some((value) => String(value).toLowerCase().includes(term))).length
+    setMessage(resultCount === 0 ? `Aucun étudiant trouvé pour « ${search.trim()} »` : `${resultCount} résultat(s) trouvé(s)`)
   }
 
   if (!isAuthenticated) {
@@ -158,7 +179,7 @@ function App() {
             <label>Argent<input name="argent" value={form.argent} onChange={updateField} type="number" min="0" /></label>
           </div><div className="action-row"><button className="button success" type="submit">{editing ? '✓ Modifier' : '＋ Ajouter'}</button><button className="button neutral" type="button" onClick={clearForm}>Effacer</button></div></form>
         </section>
-        <section className="card table-card"><div className="table-toolbar"><div><h2>Liste des étudiants</h2><span className="count">{visibleStudents.length} résultat(s)</span></div><input className="search" placeholder="Rechercher..." value={search} onChange={(event) => setSearch(event.target.value)} /></div><p className="status">{message}</p>
+        <section className="card table-card"><div className="table-toolbar"><div><h2>Liste des étudiants</h2><span className="count">{visibleStudents.length} résultat(s)</span></div><div className="table-actions"><input className="search" placeholder="Rechercher puis appuyer sur Entrée" value={search} onChange={(event) => setSearch(event.target.value)} onKeyDown={handleSearchKeyDown} /><button className="table-delete-button" type="button" onClick={() => deleteStudent(editing ? Number(form.id) : null)}>Supprimer</button></div></div><p className="status">{message}</p>
           <div className="table-wrap"><table><thead><tr>{['ID', 'Nom', 'Prénom', 'Mention', 'Parcours', 'Niveau', 'Date', 'Téléphone', 'Argent', 'Action'].map((heading) => <th key={heading}>{heading}</th>)}</tr></thead><tbody>
             {visibleStudents.length === 0 ? <tr><td className="empty" colSpan="10">Aucun étudiant trouvé</td></tr> : visibleStudents.map((student) => <tr key={student.id} onClick={() => selectStudent(student)} className={Number(form.id) === student.id ? 'selected' : ''}><td>{student.id}</td><td>{student.nom}</td><td>{student.prenom}</td><td>{student.mention}</td><td>{student.parcour}</td><td>{student.niveau}</td><td>{student.date_naissance}</td><td>{student.telephone}</td><td>{student.argent.toLocaleString('fr-FR')} Ar</td><td><button className="delete-link" type="button" onClick={(event) => { event.stopPropagation(); deleteStudent(student.id) }}>Supprimer</button></td></tr>)}
           </tbody></table></div>
