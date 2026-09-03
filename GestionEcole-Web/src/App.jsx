@@ -56,6 +56,7 @@ function App() {
   }
 
   async function handleLogout() {
+    if (!window.confirm('Voulez-vous vraiment vous déconnecter ?')) return
     await supabase?.auth.signOut()
     setLogin({ identifiant: '', password: '' })
   }
