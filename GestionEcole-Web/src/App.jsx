@@ -3,7 +3,7 @@ import './App.css'
 import { supabase } from './lib/supabase'
 
 const emptyStudent = { id: '', nom: '', prenom: '', mention: '', parcour: '', niveau: 'L1', date_naissance: '', telephone: '', argent: '' }
-const adminEmail = 'admin@gestionecole.local'
+const adminEmail = 'rakotonandrasanaamede5@gmail.com'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
