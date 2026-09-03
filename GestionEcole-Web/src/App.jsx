@@ -3,6 +3,7 @@ import './App.css'
 import { supabase } from './lib/supabase'
 
 const emptyStudent = { id: '', nom: '', prenom: '', mention: '', parcour: '', niveau: 'L1', date_naissance: '', telephone: '', argent: '' }
+const adminEmail = 'admin@gestionecole.local'
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -44,7 +45,7 @@ function App() {
       return
     }
     const identifier = login.identifiant.trim().toLowerCase()
-    const email = identifier === 'admin' ? 'admingestionecole@gmail.com' : identifier
+    const email = identifier === 'admin' ? adminEmail : identifier
     if (!email.includes('@')) {
       setLoginError('Saisissez une adresse e-mail valide.')
       return
@@ -127,7 +128,7 @@ function App() {
           <div className="login-brand"><span className="login-icon" aria-hidden="true">🎓</span><span>GESTION D&apos;ÉCOLE</span></div>
           <div className="login-heading"><p className="eyebrow">ESPACE ADMINISTRATIF</p><h1 id="login-title">Bienvenue</h1><p>Connectez-vous pour gérer les étudiants et les données de votre établissement.</p></div>
           <form className="login-form" onSubmit={handleLogin}>
-            <label htmlFor="identifiant">Adresse e-mail<input id="identifiant" name="identifiant" value={login.identifiant} onChange={(event) => { setLogin({ ...login, identifiant: event.target.value }); setLoginError('') }} type="email" placeholder="admingestionecole@gmail.com" autoComplete="username" autoFocus required /></label>
+            <label htmlFor="identifiant">Identifiant ou adresse e-mail<input id="identifiant" name="identifiant" value={login.identifiant} onChange={(event) => { setLogin({ ...login, identifiant: event.target.value }); setLoginError('') }} type="text" placeholder="admin" autoComplete="username" autoFocus required /></label>
             <label htmlFor="password">Mot de passe<div className="password-field"><input id="password" name="password" value={login.password} onChange={(event) => { setLogin({ ...login, password: event.target.value }); setLoginError('') }} type={showPassword ? 'text' : 'password'} placeholder="Votre mot de passe" autoComplete="current-password" required /><button className="password-toggle" type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'} title={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}>{showPassword ? <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8M9.9 5.1A10.7 10.7 0 0112 4.8c5.2 0 8.8 5.2 9.8 7.2a16.7 16.7 0 01-3.2 4.2M6.2 6.2A16.4 16.4 0 002.2 12c1 2 4.6 7.2 9.8 7.2a10.8 10.8 0 003.1-.5" /></svg> : <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.2 12c1-2 4.6-7.2 9.8-7.2s8.8 5.2 9.8 7.2c-1 2-4.6 7.2-9.8 7.2S3.2 14 2.2 12z" /><circle cx="12" cy="12" r="2.8" /></svg>}</button></div></label>
             {loginError && <p className="login-error" role="alert">{loginError}</p>}
             <button className="login-button" type="submit">Se connecter <span aria-hidden="true">→</span></button>

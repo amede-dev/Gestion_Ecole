@@ -19,7 +19,7 @@ If you are developing a production application, we recommend using TypeScript wi
 La connexion administrative utilise Supabase Auth : le mot de passe est stocké et vérifié par Supabase, jamais dans le code React.
 
 1. Copiez `.env.example` vers `.env.local` et renseignez l’URL du projet ainsi que la clé `anon` publique.
-2. Dans Supabase, allez dans **Authentication > Users > Add user** et créez l’utilisateur `admin@gestionecole.local` avec le mot de passe `admin123`. Le mot `admin` saisi dans l’application est automatiquement converti en cette adresse.
+2. Dans Supabase, allez dans **Authentication > Users > Add user** et créez l’utilisateur `admin@gestionecole.local` avec le mot de passe administrateur de votre choix. Cochez la confirmation automatique : cette adresse interne ne nécessite pas de boîte Gmail. Le mot `admin` saisi dans l’application est automatiquement converti en cette adresse.
 3. Exécutez [supabase-setup.sql](supabase-setup.sql) dans le SQL Editor. Il active RLS et autorise uniquement les utilisateurs connectés à accéder à `mytable`.
 
 Ne mettez jamais la clé `service_role` dans `.env.local` ou dans le code frontend.
